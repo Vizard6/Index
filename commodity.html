@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Live Gold & Silver Prices</title>
+</head>
+<body>
+
+<h2>Live Prices (₹)</h2>
+
+<p>24K Gold (10g): ₹ <span id="g24">--</span></p>
+<p>22K Gold (10g): ₹ <span id="g22">--</span></p>
+<p>Silver (1kg): ₹ <span id="silver">--</span></p>
+
+<script>
+const CSV_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT6roqOThZbGfSM-E22NPAnk0kJ3w6TfQ2ao6ptvOs1CRhH4yOhryEV4HqebJsD4ejEYqt-iCjS_qH3/pubhtml";
+
+async function loadPrices() {
+  const res = await fetch(CSV_URL);
+  const text = await res.text();
+
+  // get last line (prices)
+  const lines = text.trim().split("\n");
+  const values = lines[lines.length - 1].split(",");
+
+  document.getElementById("g24").innerText = values[0];
+  document.getElementById("g22").innerText = values[1];
+  document.getElementById("silver").innerText = values[2];
+}
+
+loadPrices();
+setInterval(loadPrices, 60000); // refresh every 1 min
+</script>
+
+</body>
+</html>
