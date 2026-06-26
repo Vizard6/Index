@@ -1,155 +1,56 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Gold Silver Prices India | 22K 24K Gold Rate | Silver Price</title>
-    <meta name="description" content="Check live gold and silver prices in India. Get real-time 22K, 24K gold rates per 10g and silver prices per kg across major cities.">
-    <meta name="keywords" content="gold price today, silver price India, 22K gold, 24K gold, Mumbai gold rate, Delhi gold price">
-   
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container { max-width: 1200px; margin: 0 auto; }
-        h1 { text-align: center; color: white; margin-bottom: 15px; font-size: 2.5em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-        .subtitle { text-align: center; color: rgba(255,255,255,0.9); margin-bottom: 30px; font-size: 1.1em; }
-        .info-banner {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .price-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-        .price-card {
-            background: white;
-            border-radius: 15px;
-            padding: 40px 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            text-align: center;
-            transition: transform 0.3s;
-        }
-        .price-card:hover { transform: translateY(-5px); }
-        .icon { font-size: 50px; margin-bottom: 15px; }
-        .card-title { font-size: 1.5em; color: #333; font-weight: 600; margin-bottom: 5px; }
-        .card-subtitle { font-size: 0.9em; color: #666; margin-bottom: 20px; }
-        .price-display {
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #667eea;
-        }
-        .loading { color: #999; font-style: italic; }
-        .error { color: #e74c3c; }
-        .update-time { text-align: center; color: white; margin: 20px 0 40px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
-        .refresh-btn {
-            display: block;
-            margin: 30px auto;
-            padding: 15px 40px;
-            background: white;
-            color: #667eea;
-            border: none;
-            border-radius: 30px;
-            font-size: 1.1em;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>💰 Live Gold & Silver Prices India</h1>
-        <p class="subtitle">Real-time 22K, 24K Gold Rate & Silver Price Updates</p>
-       
-        <div class="info-banner">
-            📊 Powered by Metals.dev • Updates every 10 minutes
-        </div>
+<script>
+    const API_KEY = "A7TV8RGC4DOKZNH5GPRF490H5GPRF";
+    
+    // Higher premium to match Indian market
+    const GOLD_PREMIUM = 1.135;   // ~13.5% premium
+    const SILVER_PREMIUM = 1.25;  // ~25% premium
 
-        <div class="price-grid">
-            <article class="price-card">
-                <div class="icon">🥇</div>
-                <h2 class="card-title">Gold 24K</h2>
-                <p class="card-subtitle">Per 10 Grams</p>
-                <div id="gold24-price" class="price-display loading">Loading...</div>
-            </article>
-            <article class="price-card">
-                <div class="icon">🏆</div>
-                <h2 class="card-title">Gold 22K</h2>
-                <p class="card-subtitle">Per 10 Grams</p>
-                <div id="gold22-price" class="price-display loading">Loading...</div>
-            </article>
-            <article class="price-card">
-                <div class="icon">🥈</div>
-                <h2 class="card-title">Silver</h2>
-                <p class="card-subtitle">Per 1 Kilogram</p>
-                <div id="silver-price" class="price-display loading">Loading...</div>
-            </article>
-        </div>
-
-        <button class="refresh-btn" onclick="fetchLivePrices()">🔄 Refresh Prices Now</button>
-        <div class="update-time" id="update-time">Loading latest prices...</div>
-    </div>
-
-    <script>
-        const API_KEY = "A7TV8RGC4DOKZNH5GPRF490H5GPRF";
-
-        async function fetchLivePrices() {
-            const displays = {
-                gold24: document.getElementById('gold24-price'),
-                gold22: document.getElementById('gold22-price'),
-                silver: document.getElementById('silver-price')
-            };
-
-            Object.values(displays).forEach(el => el.textContent = "Updating...");
-
-            try {
-                // Metals.dev API Call
-                const res = await fetch(`https://api.metals.dev/v1/latest?api_key=${API_KEY}&currency=INR`);
-                const data = await res.json();
-
-                if (data.metals) {
-                    // Gold 24K per 10g
-                    const goldPerGram = data.metals.gold / 31.1035;   // convert ounce to gram
-                    const gold24_10g = Math.round(goldPerGram * 10);
-                    displays.gold24.textContent = `₹${gold24_10g.toLocaleString('en-IN')}`;
-
-                    // Gold 22K
-                    const gold22_10g = Math.round(gold24_10g * 22 / 24);
-                    displays.gold22.textContent = `₹${gold22_10g.toLocaleString('en-IN')}`;
-
-                    // Silver per kg
-                    const silverPerGram = data.metals.silver / 31.1035;
-                    const silverPerKg = Math.round(silverPerGram * 1000);
-                    displays.silver.textContent = `₹${silverPerKg.toLocaleString('en-IN')}`;
-                }
-
-                document.getElementById('update-time').textContent = 
-                    `Last updated: ${new Date().toLocaleTimeString('en-IN')}`;
-
-            } catch (error) {
-                console.error(error);
-                Object.values(displays).forEach(el => {
-                    el.textContent = "Failed to load";
-                    el.classList.add('error');
-                });
-            }
-        }
-
-        window.onload = () => {
-            fetchLivePrices();
-            setInterval(fetchLivePrices, 600000); // 10 minutes
+    async function fetchLivePrices() {
+        const displays = {
+            gold24: document.getElementById('gold24-price'),
+            gold22: document.getElementById('gold22-price'),
+            silver: document.getElementById('silver-price')
         };
-    </script>
-</body>
-</html>
+
+        Object.values(displays).forEach(el => {
+            el.textContent = "Updating...";
+            el.classList.remove('error');
+        });
+
+        try {
+            const res = await fetch(`https://api.metals.dev/v1/latest?api_key=${API_KEY}&currency=INR`);
+            const data = await res.json();
+
+            if (data.metals) {
+                // Gold 24K per 10g
+                const goldGramSpot = data.metals.gold / 31.1035;
+                let gold24_10g = Math.round(goldGramSpot * 10 * GOLD_PREMIUM);
+                displays.gold24.textContent = `₹${gold24_10g.toLocaleString('en-IN')}`;
+
+                // Gold 22K
+                let gold22_10g = Math.round(gold24_10g * 22 / 24);
+                displays.gold22.textContent = `₹${gold22_10g.toLocaleString('en-IN')}`;
+
+                // Silver per kg
+                const silverGramSpot = data.metals.silver / 31.1035;
+                let silverKg = Math.round(silverGramSpot * 1000 * SILVER_PREMIUM);
+                displays.silver.textContent = `₹${silverKg.toLocaleString('en-IN')}`;
+            }
+
+            document.getElementById('update-time').innerHTML = 
+                `Last updated: ${new Date().toLocaleTimeString('en-IN')} <small>(Adjusted for Indian Market)</small>`;
+
+        } catch (error) {
+            console.error(error);
+            Object.values(displays).forEach(el => {
+                el.textContent = "Failed";
+                el.classList.add('error');
+            });
+        }
+    }
+
+    window.onload = () => {
+        fetchLivePrices();
+        setInterval(fetchLivePrices, 600000);
+    };
+</script>
