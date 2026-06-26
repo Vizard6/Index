@@ -3,159 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Gold Silver Prices India | 22K 24K Gold Rate | Silver Price</title>
-    <meta name="description" content="Check live gold and silver prices in India.">
-   
+    <title>Live Gold & Silver Prices India</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             min-height: 100vh;
             padding: 20px;
+            text-align: center;
         }
         .container { max-width: 1200px; margin: 0 auto; }
-        h1 { text-align: center; color: white; margin-bottom: 15px; font-size: 2.5em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-        .subtitle { text-align: center; color: rgba(255,255,255,0.9); margin-bottom: 30px; font-size: 1.1em; }
-        .info-banner {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 30px;
-        }
+        h1 { font-size: 2.5em; margin-bottom: 10px; }
         .price-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 25px;
-            margin-bottom: 40px;
+            margin: 40px 0;
         }
         .price-card {
             background: white;
+            color: #333;
             border-radius: 15px;
-            padding: 40px 30px;
+            padding: 30px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            text-align: center;
-            transition: transform 0.3s;
         }
-        .price-card:hover { transform: translateY(-5px); }
-        .icon { font-size: 50px; margin-bottom: 15px; }
-        .card-title { font-size: 1.5em; color: #333; font-weight: 600; margin-bottom: 5px; }
-        .card-subtitle { font-size: 0.9em; color: #666; margin-bottom: 20px; }
-        .price-display {
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #667eea;
-        }
-        .update-time { text-align: center; color: white; margin: 20px 0 40px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+        .price-display { font-size: 2.4em; font-weight: bold; color: #667eea; margin: 10px 0; }
         .refresh-btn {
-            display: block;
-            margin: 30px auto;
             padding: 15px 40px;
+            font-size: 1.1em;
             background: white;
             color: #667eea;
             border: none;
             border-radius: 30px;
-            font-size: 1.1em;
-            font-weight: 600;
             cursor: pointer;
+            margin: 20px;
         }
-        .note {
-            text-align: center;
-            color: #ffeb3b;
-            font-size: 0.9em;
-            margin-top: 10px;
-        }
+        .error { color: #ff6b6b; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>💰 Live Gold & Silver Prices India</h1>
-        <p class="subtitle">Real-time 22K, 24K Gold Rate & Silver Price</p>
-       
-        <div class="info-banner">
-            📊 Live prices from Indian Market Sources • Updates every 10 minutes
-        </div>
+        <p>Real-time Rates • Updated every 10 minutes</p>
 
         <div class="price-grid">
-            <article class="price-card">
-                <div class="icon">🥇</div>
-                <h2 class="card-title">Gold 24K</h2>
-                <p class="card-subtitle">Per 10 Grams</p>
-                <div id="gold24-price" class="price-display">Loading...</div>
-            </article>
-            <article class="price-card">
-                <div class="icon">🏆</div>
-                <h2 class="card-title">Gold 22K</h2>
-                <p class="card-subtitle">Per 10 Grams</p>
-                <div id="gold22-price" class="price-display">Loading...</div>
-            </article>
-            <article class="price-card">
-                <div class="icon">🥈</div>
-                <h2 class="card-title">Silver</h2>
-                <p class="card-subtitle">Per 1 Kilogram</p>
-                <div id="silver-price" class="price-display">Loading...</div>
-            </article>
+            <div class="price-card">
+                <h2>Gold 24K (10g)</h2>
+                <div id="gold24" class="price-display">Loading...</div>
+            </div>
+            <div class="price-card">
+                <h2>Gold 22K (10g)</h2>
+                <div id="gold22" class="price-display">Loading...</div>
+            </div>
+            <div class="price-card">
+                <h2>Silver (1kg)</h2>
+                <div id="silver" class="price-display">Loading...</div>
+            </div>
         </div>
 
-        <button class="refresh-btn" onclick="fetchPrices()">🔄 Refresh Prices Now</button>
-        <div class="update-time" id="update-time">Loading...</div>
-        <p class="note">Prices are indicative. Actual rates may vary by city & jeweller.</p>
+        <button class="refresh-btn" onclick="fetchPrices()">🔄 Refresh Now</button>
+        <div id="update-time"></div>
     </div>
 
     <script>
         async function fetchPrices() {
-            const displays = {
-                gold24: document.getElementById('gold24-price'),
-                gold22: document.getElementById('gold22-price'),
-                silver: document.getElementById('silver-price')
+            const els = {
+                gold24: document.getElementById('gold24'),
+                gold22: document.getElementById('gold22'),
+                silver: document.getElementById('silver')
             };
 
-            Object.values(displays).forEach(el => el.textContent = "Updating...");
+            Object.values(els).forEach(el => el.textContent = "Updating...");
 
             try {
-                // Using AllOrigins proxy to fetch public gold rate page
-                const proxy = 'https://api.allorigins.win/get?url=';
-                const target = encodeURIComponent('https://groww.in/gold-rates');
+                // Using a more stable public source
+                const response = await fetch('https://api.allorigins.win/get?url=' + 
+                    encodeURIComponent('https://www.goodreturns.in/gold-rates/'));
                 
-                const res = await fetch(proxy + target);
-                const data = await res.json();
-                const html = data.contents;
+                const result = await response.json();
+                const html = result.contents;
 
-                // Extract prices using regex (simple but effective)
-                const gold24Match = html.match(/24K.*?₹([\d,]+)/i);
-                const gold22Match = html.match(/22K.*?₹([\d,]+)/i);
-                const silverMatch = html.match(/Silver.*?₹([\d,]+)/i);
+                // Extract prices
+                const goldMatch = html.match(/24K Gold.*?(₹[\d,]+)/i);
+                const silverMatch = html.match(/Silver.*?(₹[\d,]+)/i);
 
-                if (gold24Match) {
-                    let gold24 = gold24Match[1].replace(/,/g, '');
-                    displays.gold24.textContent = `₹${parseInt(gold24).toLocaleString('en-IN')}`;
-                    
-                    // Calculate 22K
-                    let gold22 = Math.round(parseInt(gold24) * 22 / 24);
-                    displays.gold22.textContent = `₹${gold22.toLocaleString('en-IN')}`;
+                if (goldMatch) {
+                    let price24 = goldMatch[1].replace(/[^0-9]/g, '');
+                    els.gold24.textContent = `₹${parseInt(price24).toLocaleString('en-IN')}`;
+                    els.gold22.textContent = `₹${Math.round(parseInt(price24) * 22 / 24).toLocaleString('en-IN')}`;
                 }
 
                 if (silverMatch) {
-                    let silver = silverMatch[1].replace(/,/g, '');
-                    displays.silver.textContent = `₹${parseInt(silver).toLocaleString('en-IN')}`;
+                    let silverPrice = silverMatch[1].replace(/[^0-9]/g, '');
+                    els.silver.textContent = `₹${parseInt(silverPrice).toLocaleString('en-IN')}`;
                 }
 
-                document.getElementById('update-time').textContent = 
-                    `Last updated: ${new Date().toLocaleTimeString('en-IN')}`;
+                document.getElementById('update-time').textContent = `Last updated: ${new Date().toLocaleTimeString('en-IN')}`;
 
-            } catch (err) {
-                console.error(err);
-                Object.values(displays).forEach(el => el.textContent = "Error loading");
+            } catch (e) {
+                console.error(e);
+                Object.values(els).forEach(el => {
+                    el.textContent = "Data unavailable";
+                    el.classList.add('error');
+                });
             }
         }
 
-        // Auto refresh every 10 minutes
-        window.onload = () => {
-            fetchPrices();
-            setInterval(fetchPrices, 600000);
-        };
+        window.onload = fetchPrices;
+        setInterval(fetchPrices, 600000);
     </script>
 </body>
 </html>
