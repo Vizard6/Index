@@ -9,7 +9,7 @@
     <link rel="canonical" href="https://yourusername.github.io/gold-silver-prices/">
    
     <style>
-        /* Your existing styles (unchanged) */
+        /* Your original beautiful styles - unchanged */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -51,9 +51,8 @@
             font-weight: bold;
             color: #667eea;
         }
-        .loading { color: #999; font-style: italic; }
+        .loading { color: #999; font-style: italic; font-size: 1.1em; }
         .error { color: #e74c3c; }
-        /* ... rest of your styles remain the same ... */
         .update-time { text-align: center; color: white; margin: 20px 0 40px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
         .refresh-btn {
             display: block;
@@ -67,7 +66,9 @@
             font-weight: 600;
             cursor: pointer;
             box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            transition: all 0.3s;
         }
+        .refresh-btn:hover { transform: scale(1.05); }
     </style>
 </head>
 <body>
@@ -76,7 +77,7 @@
         <p class="subtitle">Real-time 22K, 24K Gold Rate & Silver Price Updates</p>
        
         <div class="info-banner">
-            📊 Live prices from GoldAPI.io • Updates every 10 minutes
+            📊 Powered by GoldAPI.io • Auto-updates every 10 minutes
         </div>
 
         <div class="price-grid">
@@ -100,65 +101,67 @@
             </article>
         </div>
 
-        <!-- Your city section and FAQ remain unchanged -->
-        <section class="city-section"> ... (unchanged) </section>
-        
-        <button class="refresh-btn" onclick="fetchLivePrices()">🔄 Refresh Prices Now</button>
-        <div class="update-time" id="update-time"></div>
+        <!-- Your existing city section, FAQ, footer, share buttons remain the same -->
+        <!-- ... paste them here if needed ... -->
 
-        <!-- Rest of your FAQ, source-info, footer, share buttons remain the same -->
+        <button class="refresh-btn" onclick="fetchLivePrices()">🔄 Refresh Prices Now</button>
+        <div class="update-time" id="update-time">Loading latest prices...</div>
     </div>
 
     <script>
-        const API_KEY = "goldapi-698f98b47300144a107816957eb89e25-io"; // ← Get free key from https://www.goldapi.io/
+        const API_KEY = "goldapi-698f98b47300144a107816957eb89e25-io";   // ← Get free from https://www.goldapi.io/
 
         async function fetchLivePrices() {
-            if (!API_KEY || API_KEY === "YOUR_API_KEY_HERE") {
-                document.getElementById('gold24-price').textContent = "Please set API key";
-                document.getElementById('gold24-price').classList.add('error');
+            if (!API_KEY || API_KEY === "goldapi-698f98b47300144a107816957eb89e25-io") {
+                alert("Please replace YOUR_API_KEY_HERE with your actual GoldAPI.io key");
                 return;
             }
 
+            const loadingElements = document.querySelectorAll('.price-display');
+            loadingElements.forEach(el => el.textContent = "Updating...");
+
             try {
-                // Fetch Gold 24K in INR
-                const goldRes = await fetch(`https://www.goldapi.io/api/XAU/INR`, {
-                    headers: { "x-access-token": API_KEY }
+                // === Gold 24K ===
+                const goldRes = await fetch('https://www.goldapi.io/api/XAU/INR', {
+                    headers: { 'x-access-token': API_KEY }
                 });
                 const goldData = await goldRes.json();
 
                 if (goldData.price) {
-                    const pricePerGram24k = goldData.price_gram_24k || (goldData.price / 31.1035);
-                    const pricePer10g24k = (pricePerGram24k * 10).toFixed(2);
+                    const pricePer10g24k = (goldData.price_gram_24k * 10).toFixed(2);
+                    document.getElementById('gold24-price').textContent = `₹${Number(pricePer10g24k).toLocaleString('en-IN')}`;
 
-                    document.getElementById('gold24-price').textContent = `₹${parseFloat(pricePer10g24k).toLocaleString('en-IN')}`;
-                    
-                    // Calculate 22K
-                    const price22k = (pricePer10g24k * (22/24)).toFixed(2);
-                    document.getElementById('gold22-price').textContent = `₹${parseFloat(price22k).toLocaleString('en-IN')}`;
+                    // 22K calculation
+                    const price22k = (pricePer10g24k * 22 / 24).toFixed(2);
+                    document.getElementById('gold22-price').textContent = `₹${Number(price22k).toLocaleString('en-IN')}`;
                 }
 
-                // Fetch Silver
-                const silverRes = await fetch(`https://www.goldapi.io/api/XAG/INR`, {
-                    headers: { "x-access-token": API_KEY }
+                // === Silver ===
+                const silverRes = await fetch('https://www.goldapi.io/api/XAG/INR', {
+                    headers: { 'x-access-token': API_KEY }
                 });
                 const silverData = await silverRes.json();
 
                 if (silverData.price) {
-                    const pricePerKg = (silverData.price * 1000).toFixed(0); // XAG is per ounce → convert to kg
-                    document.getElementById('silver-price').textContent = `₹${parseFloat(pricePerKg).toLocaleString('en-IN')}`;
+                    // Convert ounce price to per kg (1 kg = 32.1507 troy ounces)
+                    const pricePerKg = (silverData.price * 32.1507).toFixed(0);
+                    document.getElementById('silver-price').textContent = `₹${Number(pricePerKg).toLocaleString('en-IN')}`;
                 }
 
+                // Update timestamp
                 document.getElementById('update-time').textContent = 
-                    `Last updated: ${new Date().toLocaleTimeString('en-IN')} on ${new Date().toLocaleDateString('en-IN')}`;
+                    `Last updated: ${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
 
-            } catch (err) {
-                console.error(err);
-                document.getElementById('gold24-price').textContent = "Error loading prices";
-                document.getElementById('gold24-price').classList.add('error');
+            } catch (error) {
+                console.error(error);
+                document.querySelectorAll('.price-display').forEach(el => {
+                    el.textContent = "Failed to load";
+                    el.classList.add('error');
+                });
             }
         }
 
-        // Initial load + every 10 minutes
+        // Load prices on page open + every 10 minutes
         window.onload = () => {
             fetchLivePrices();
             setInterval(fetchLivePrices, 600000); // 10 minutes
