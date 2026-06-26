@@ -9,7 +9,6 @@
     <link rel="canonical" href="https://yourusername.github.io/gold-silver-prices/">
    
     <style>
-        /* Your original beautiful styles - unchanged */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -101,70 +100,62 @@
             </article>
         </div>
 
-        <!-- Your existing city section, FAQ, footer, share buttons remain the same -->
-        <!-- ... paste them here if needed ... -->
+        <!-- Paste your original city section, FAQ, footer, share buttons here if you want them all in one file -->
 
         <button class="refresh-btn" onclick="fetchLivePrices()">🔄 Refresh Prices Now</button>
         <div class="update-time" id="update-time">Loading latest prices...</div>
     </div>
 
     <script>
-        const API_KEY = " ";   // ← Get free from https://www.goldapi.io/
+        const API_KEY = "goldapi-698f98b47300144a107816957eb89e25-io";
 
         async function fetchLivePrices() {
-            if (!API_KEY || API_KEY === "goldapi-698f98b47300144a107816957eb89e25-io") {
-                alert("Please replace YOUR_API_KEY_HERE with your actual GoldAPI.io key");
-                return;
-            }
-
             const loadingElements = document.querySelectorAll('.price-display');
             loadingElements.forEach(el => el.textContent = "Updating...");
 
             try {
-                // === Gold 24K ===
+                // Gold 24K
                 const goldRes = await fetch('https://www.goldapi.io/api/XAU/INR', {
                     headers: { 'x-access-token': API_KEY }
                 });
                 const goldData = await goldRes.json();
 
-                if (goldData.price) {
+                if (goldData.price_gram_24k) {
                     const pricePer10g24k = (goldData.price_gram_24k * 10).toFixed(2);
                     document.getElementById('gold24-price').textContent = `₹${Number(pricePer10g24k).toLocaleString('en-IN')}`;
 
-                    // 22K calculation
+                    // 22K Gold
                     const price22k = (pricePer10g24k * 22 / 24).toFixed(2);
                     document.getElementById('gold22-price').textContent = `₹${Number(price22k).toLocaleString('en-IN')}`;
                 }
 
-                // === Silver ===
+                // Silver (per kg)
                 const silverRes = await fetch('https://www.goldapi.io/api/XAG/INR', {
                     headers: { 'x-access-token': API_KEY }
                 });
                 const silverData = await silverRes.json();
 
                 if (silverData.price) {
-                    // Convert ounce price to per kg (1 kg = 32.1507 troy ounces)
                     const pricePerKg = (silverData.price * 32.1507).toFixed(0);
                     document.getElementById('silver-price').textContent = `₹${Number(pricePerKg).toLocaleString('en-IN')}`;
                 }
 
-                // Update timestamp
                 document.getElementById('update-time').textContent = 
                     `Last updated: ${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
 
             } catch (error) {
                 console.error(error);
                 document.querySelectorAll('.price-display').forEach(el => {
-                    el.textContent = "Failed to load";
+                    el.textContent = "Error loading data";
                     el.classList.add('error');
                 });
             }
         }
 
-        // Load prices on page open + every 10 minutes
+        // Auto load + update every 10 minutes
         window.onload = () => {
             fetchLivePrices();
-            setInterval(fetchLivePrices, 600000); // 10 minutes
+            setInterval(fetchLivePrices, 600000);
         };
     </script>
 </body>
