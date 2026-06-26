@@ -12,10 +12,10 @@
             color: white;
             min-height: 100vh;
             padding: 20px;
-            text-align: center;
         }
         .container { max-width: 1200px; margin: 0 auto; }
-        h1 { font-size: 2.5em; margin-bottom: 10px; }
+        h1 { font-size: 2.5em; margin-bottom: 10px; text-align: center; }
+        .subtitle { text-align: center; margin-bottom: 30px; opacity: 0.9; }
         .price-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -26,10 +26,16 @@
             background: white;
             color: #333;
             border-radius: 15px;
-            padding: 30px;
+            padding: 35px 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
         }
-        .price-display { font-size: 2.4em; font-weight: bold; color: #667eea; margin: 10px 0; }
+        .price-display {
+            font-size: 2.6em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 15px 0;
+        }
         .refresh-btn {
             padding: 15px 40px;
             font-size: 1.1em;
@@ -38,33 +44,37 @@
             border: none;
             border-radius: 30px;
             cursor: pointer;
-            margin: 20px;
+            display: block;
+            margin: 30px auto;
         }
-        .error { color: #ff6b6b; }
+        #update-time { text-align: center; margin: 20px; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>💰 Live Gold & Silver Prices India</h1>
-        <p>Real-time Rates • Updated every 10 minutes</p>
+        <p class="subtitle">Real-time 22K, 24K Gold & Silver Rates</p>
 
         <div class="price-grid">
             <div class="price-card">
-                <h2>Gold 24K (10g)</h2>
+                <h2>Gold 24K</h2>
+                <p>Per 10 Grams</p>
                 <div id="gold24" class="price-display">Loading...</div>
             </div>
             <div class="price-card">
-                <h2>Gold 22K (10g)</h2>
+                <h2>Gold 22K</h2>
+                <p>Per 10 Grams</p>
                 <div id="gold22" class="price-display">Loading...</div>
             </div>
             <div class="price-card">
-                <h2>Silver (1kg)</h2>
+                <h2>Silver</h2>
+                <p>Per 1 Kilogram</p>
                 <div id="silver" class="price-display">Loading...</div>
             </div>
         </div>
 
-        <button class="refresh-btn" onclick="fetchPrices()">🔄 Refresh Now</button>
-        <div id="update-time"></div>
+        <button class="refresh-btn" onclick="fetchPrices()">🔄 Refresh Prices Now</button>
+        <div id="update-time">Loading latest prices...</div>
     </div>
 
     <script>
@@ -75,44 +85,55 @@
                 silver: document.getElementById('silver')
             };
 
-            Object.values(els).forEach(el => el.textContent = "Updating...");
+            // Show updating
+            Object.values(els).forEach(el => {
+                if (el) el.textContent = "Updating...";
+            });
 
             try {
-                // Using a more stable public source
-                const response = await fetch('https://api.allorigins.win/get?url=' + 
-                    encodeURIComponent('https://www.goodreturns.in/gold-rates/'));
+                const proxyUrl = 'https://api.allorigins.win/get?url=';
+                const targetUrl = encodeURIComponent('https://groww.in/gold-rates');
                 
+                const response = await fetch(proxyUrl + targetUrl);
                 const result = await response.json();
                 const html = result.contents;
 
                 // Extract prices
-                const goldMatch = html.match(/24K Gold.*?(₹[\d,]+)/i);
-                const silverMatch = html.match(/Silver.*?(₹[\d,]+)/i);
+                const gold24Match = html.match(/24K.*?₹([\d,]+)/i);
+                const silverMatch = html.match(/Silver.*?₹([\d,]+)/i);
 
-                if (goldMatch) {
-                    let price24 = goldMatch[1].replace(/[^0-9]/g, '');
-                    els.gold24.textContent = `₹${parseInt(price24).toLocaleString('en-IN')}`;
-                    els.gold22.textContent = `₹${Math.round(parseInt(price24) * 22 / 24).toLocaleString('en-IN')}`;
+                if (gold24Match && els.gold24) {
+                    let price = gold24Match[1].replace(/,/g, '');
+                    els.gold24.textContent = `₹${parseInt(price).toLocaleString('en-IN')}`;
+                    
+                    if (els.gold22) {
+                        let gold22 = Math.round(parseInt(price) * 22 / 24);
+                        els.gold22.textContent = `₹${gold22.toLocaleString('en-IN')}`;
+                    }
                 }
 
-                if (silverMatch) {
-                    let silverPrice = silverMatch[1].replace(/[^0-9]/g, '');
-                    els.silver.textContent = `₹${parseInt(silverPrice).toLocaleString('en-IN')}`;
+                if (silverMatch && els.silver) {
+                    let price = silverMatch[1].replace(/,/g, '');
+                    els.silver.textContent = `₹${parseInt(price).toLocaleString('en-IN')}`;
                 }
 
-                document.getElementById('update-time').textContent = `Last updated: ${new Date().toLocaleTimeString('en-IN')}`;
+                document.getElementById('update-time').textContent = 
+                    `Last updated: ${new Date().toLocaleTimeString('en-IN')}`;
 
-            } catch (e) {
-                console.error(e);
+            } catch (err) {
+                console.error(err);
                 Object.values(els).forEach(el => {
-                    el.textContent = "Data unavailable";
-                    el.classList.add('error');
+                    if (el) el.textContent = "Unable to load";
                 });
+                document.getElementById('update-time').textContent = "Error - Try Refresh";
             }
         }
 
-        window.onload = fetchPrices;
-        setInterval(fetchPrices, 600000);
+        // Initial load + auto refresh
+        window.onload = () => {
+            fetchPrices();
+            setInterval(fetchPrices, 600000); // 10 minutes
+        };
     </script>
 </body>
 </html>
