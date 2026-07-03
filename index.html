@@ -1,70 +1,88 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Gold & Silver Prices India - 24K, 22K Rates</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            margin: 0;
-            padding: 20px;
-        }
-        .container { max-width: 1100px; margin: auto; }
-        h1 { text-align: center; font-size: 2.4em; margin-bottom: 8px; }
-        .subtitle { text-align: center; margin-bottom: 25px; opacity: 0.95; }
-        .price-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin: 30px 0;
-        }
-        .price-card {
-            background: white;
-            color: #333;
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-            text-align: center;
-        }
-        .price-display { font-size: 2.6em; font-weight: bold; color: #2563eb; margin: 12px 0; }
-        .disclaimer {
-            text-align: center;
-            font-size: 0.9em;
-            margin: 40px 0;
-            opacity: 0.85;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>💰 Live Gold & Silver Prices India</h1>
-        <p class="subtitle">24K • 22K Gold Rate • Silver Rate • Updated Live</p>
+import requests
+import json
+from datetime import datetime
 
-        <div class="price-grid">
-            <div class="price-card">
-                <h2>Gold 24K</h2>
-                <p>Per 10 Grams</p>
-                <div class="price-display">₹1,40,500</div>
-            </div>
-            <div class="price-card">
-                <h2>Gold 22K</h2>
-                <p>Per 10 Grams</p>
-                <div class="price-display">₹1,28,800</div>
-            </div>
-            <div class="price-card">
-                <h2>Silver</h2>
-                <p>Per 1 Kilogram</p>
-                <div class="price-display">₹2,21,700</div>
-            </div>
-        </div>
+def fetch_live_rates():
+    """
+    Fetches live 24K gold & silver rates in INR from multiple sources.
+    Auto-fallback if one fails. Returns per-gram rates.
+    """
+    rates = {'gold_24k_per_g': 0, 'silver_per_g': 0, 'source': '', 'usd_inr': 85.5}
 
-        <p class="disclaimer">
-            Prices are indicative and adjusted as per major Indian market rates.<br>
-            Actual rates may vary by city & jeweller. For information purpose only.
-        </p>
-    </div>
-</body>
-</html>
+    # Try 1: metals.dev free API - direct INR per gram
+    try:
+        url = "https://api.metals.dev/v1/latest?api_key=demo&currency=INR&unit=g"
+        r = requests.get(url, timeout=8)
+        if r.status_code == 200:
+            data = r.json()
+            rates['gold_24k_per_g'] = data['metals']['gold']
+            rates['silver_per_g'] = data['metals']['silver']
+            rates['source'] = "Live API - metals.dev"
+            return rates
+    except:
+        pass
+
+    # Try 2: International spot + USDINR conversion
+    try:
+        # Get USD to INR
+        fx = requests.get("https://api.exchangerate-api.com/v4/latest/USD", timeout=5).json()
+        rates['usd_inr'] = fx['rates']['INR']
+
+        # Get gold/silver spot in USD per troy oz
+        spot = requests.get("https://api.metals.live/v1/spot", timeout=5).json()
+        gold_usd_oz = next(i['price'] for i in spot if i['metal'] == 'gold')
+        silver_usd_oz = next(i['price'] for i in spot if i['metal'] == 'silver')
+
+        # Convert: troy oz to gram = 31.1035g
+        rates['gold_24k_per_g'] = gold_usd_oz * rates['usd_inr'] / 31.1035
+        rates['silver_per_g'] = silver_usd_oz * rates['usd_inr'] / 31.1035
+        rates['source'] = "Live Spot USD + FX"
+        return rates
+    except:
+        pass
+
+    # Try 3: Fallback to hardcoded rates from 3rd July 2026 Bangalore market
+    rates['gold_24k_per_g'] = 14379.0 # 24K per gram【4837936357687271370†L176-L178】
+    rates['silver_per_g'] = 233.0 # Silver per gram【6092630179568297192†L166-L168】
+    rates['source'] = "Fallback - 3 July 2026 market data"
+    return rates
+
+def display_prices():
+    data = fetch_live_rates()
+
+    g24_1g = data['gold_24k_per_g']
+    g22_1g = g24_1g * 0.916 # 22K = 91.6% pure
+    s_1g = data['silver_per_g']
+
+    output = f"""
+{'='*55}
+  Realtime Gold & Silver Price - India
+  {datetime.now().strftime('%d %B %Y, %I:%M %p IST')}
+  Source: {data['source']}
+{'='*55}
+  24K Gold 1g : ₹{g24_1g:>10,.2f}
+  24K Gold 10g : ₹{g24_1g * 10:>10,.2f}
+
+  22K Gold 1g : ₹{g22_1g:>10,.2f}
+  22K Gold 10g : ₹{g22_1g * 10:>10,.2f}
+
+  Silver 1g : ₹{s_1g:>10,.2f}
+  Silver 1kg : ₹{s_1g * 1000:>10,.2f}
+{'='*55}
+  Note: Spot rates only. Add 3% GST + making charges for
+  jewellery. USD/INR: ₹{data['usd_inr']:.2f}
+{'='*55}
+"""
+    print(output)
+
+    # Also return as dict if you want to use it elsewhere
+    return {
+        'timestamp': datetime.now().isoformat(),
+        '24k_gold_10g': round(g24_1g * 10, 2),
+        '22k_gold_10g': round(g22_1g * 10, 2),
+        'silver_1kg': round(s_1g * 1000, 2),
+        'source': data['source']
+    }
+
+if __name__ == "__main__":
+    display_prices()
